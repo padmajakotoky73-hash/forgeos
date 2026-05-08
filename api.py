@@ -319,11 +319,18 @@ if __name__ == "__main__":
         print("uvicorn not installed. Run: pip install uvicorn[standard]", file=sys.stderr)
         sys.exit(1)
 
+    # Only watch source dirs — exclude .forgeos/ build output so
+    # Uvicorn does not restart mid-build when CoderAgent writes .py files.
     uvicorn.run(
         "api:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
-        reload_dirs=[str(_HERE)],
+        reload_dirs=[
+            str(_HERE / "agents"),
+            str(_HERE / "llm"),
+            str(_HERE / "tools"),
+            str(_HERE / "templates"),
+        ],
         log_level="info",
     )
