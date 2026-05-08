@@ -258,29 +258,47 @@ async def stream_build(build_id: str) -> StreamingResponse:
         cursor = 0
         for line in record["log"]:
             payload = json.dumps({"type": "log", "text": line})
-            yield f"data: {payload}\n\n"
+            yield f"data: {payload}
+
+"
         cursor = len(record["log"])
 
-        # Stream new lines as they arrive
+        # Stream new lines with keepalive heartbeat every 15s
+        # Prevents Next.js proxy and browser from timing out idle SSE
+        ticks_since_data = 0
         while record["status"] == "running":
-            await asyncio.sleep(0.05)
+            await asyncio.sleep(0.5)
+            ticks_since_data += 1
             log = record["log"]
             if len(log) > cursor:
                 for line in log[cursor:]:
                     payload = json.dumps({"type": "log", "text": line})
-                    yield f"data: {payload}\n\n"
+                    yield f"data: {payload}
+
+"
                 cursor = len(log)
+                ticks_since_data = 0
+            elif ticks_since_data >= 30:  # 30 * 0.5s = 15s
+                yield ": keepalive
+
+"
+                ticks_since_data = 0
 
         # Flush any final lines
         log = record["log"]
         if len(log) > cursor:
             for line in log[cursor:]:
                 payload = json.dumps({"type": "log", "text": line})
-                yield f"data: {payload}\n\n"
+                yield f"data: {payload}
+
+"
 
         # Terminal event
         done_payload = json.dumps({"type": "done", "status": record["status"]})
-        yield f"data: {done_payload}\n\n"
+        yield f"data: {done_payload}
+
+"
+
 
     return StreamingResponse(
         _events(),
