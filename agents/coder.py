@@ -26,16 +26,28 @@ SYSTEM_PROMPT = """\
 You are the CoderAgent in ForgeOS. You implement atomic engineering
 tasks end-to-end. You write production-grade code with full type hints,
 explicit error handling, and tests. You NEVER leave placeholders or
-TODOs. Each response is a sequence of file blocks formatted as:
+TODOs. Each response is a sequence of fenced file blocks. Each block
+MUST start with the file path as the language tag. Examples:
 
-```relative/path/from/project/root.py
-<file contents>
+```backend/app/routers/tasks.py
+# file contents here
 ```
 
-Do not include explanations outside of code blocks. Paths must be
-relative to the project root that already exists. Overwrite is allowed.
+```frontend/app/dashboard/page.tsx
+// file contents here
+```
 
-When writing tests, use pytest for backend and vitest for frontend.
+```backend/tests/test_tasks.py
+# test contents here
+```
+
+Rules:
+- Paths are relative to the project root (e.g. backend/app/main.py or frontend/app/page.tsx).
+- NEVER use "relative/path/from/project/root/" as a prefix — that is NOT a valid path.
+- Do not include any explanations or prose outside of code blocks.
+- Overwrite is allowed. Cover both implementation AND tests per task.
+- Use pytest for backend tests, vitest for frontend tests.
+- Use real shadcn/ui import paths: from "@/components/ui/button" not from "shadcn/ui".
 """
 
 
@@ -130,10 +142,24 @@ class CoderAgent(BaseAgent):
         if not files:
             files = self._fallback_files(task)
 
+        # Prefixes the LLM sometimes emits literally — strip them all.
+        _JUNK_PREFIXES = (
+            "relative/path/from/project/root/",
+            "relative/path/from/project/",
+            "path/from/project/root/",
+            "path/to/file/",
+            "project/root/",
+        )
+
         written: list[str] = []
         for relpath, content in files.items():
             rel = relpath.strip().lstrip("/")
-            if ".." in rel.split("/"):
+            # Strip any junk prefix the LLM snuck in
+            for junk in _JUNK_PREFIXES:
+                if rel.startswith(junk):
+                    rel = rel[len(junk):]
+                    break
+            if not rel or ".." in rel.split("/"):
                 continue
             target = project_root / rel
             target.parent.mkdir(parents=True, exist_ok=True)
