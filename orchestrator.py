@@ -1,13 +1,23 @@
-"""
-ForgeOS — orchestrator.
+﻿"""
+ForgeOS V2 — orchestrator entry point.
 
-Run end-to-end: idea → spec → scaffold → code → security → deploy →
-knowledge ingestion. Uses `rich` for nicely-coloured terminal output
-when available; gracefully falls back to plain stderr otherwise.
+The default pipeline is now driven by HermesOrchestrator which runs:
+  GStack planning gates -> ArchitectAgent -> GStack design gates ->
+  MissionOrchestrator -> ScaffoldAgent -> MissionWorkerLoop ->
+  GStack review gates -> SecurityAgent -> GStack CSO gate ->
+  QAGate -> MissionValidator -> ShipGate -> DeployAgent
+
+Use --legacy flag to run the original flat pipeline without GStack or Missions.
 
 Usage:
-    python -m forgeos.orchestrator --idea "Build a SaaS that does X"
-    python -m forgeos.orchestrator              # reads idea.txt
+    # Default (V2 — GStack + Missions + Hermes)
+    PYTHONPATH=. python3 orchestrator.py --idea "Build ContractForge"
+
+    # Legacy (V1 — flat pipeline, faster, no gates)
+    PYTHONPATH=. python3 orchestrator.py --idea "..." --legacy
+
+    # Resume an existing build
+    PYTHONPATH=. python3 orchestrator.py --idea "..." --workdir builds/<id>
 """
 
 from __future__ import annotations
@@ -76,9 +86,9 @@ class _Console:
                 "degraded": "yellow",
                 "skipped": "dim",
             }.get(status, "white")
-            self._rich.print(f"[{colour}]→ {agent:<10}[/] {status} {detail}")
+            self._rich.print(f"[{colour}]-> {agent:<16}[/] {status} {detail}")
         else:
-            sys.stderr.write(f"→ {agent:<10} {status} {detail}\n")
+            sys.stderr.write(f"-> {agent:<16} {status} {detail}\n")
             sys.stderr.flush()
 
     def info(self, msg: str) -> None:
@@ -95,22 +105,24 @@ class _Console:
 
     def error(self, msg: str) -> None:
         if self._rich:
-            self._rich.print(f"[red]✖ {msg}[/red]")
+            self._rich.print(f"[red]X {msg}[/red]")
         else:
-            sys.stderr.write(f"✖ {msg}\n")
+            sys.stderr.write(f"X {msg}\n")
 
 
 # ---------------------------------------------------------------------------
-# Orchestrator
+# Legacy V1 orchestrator (kept for --legacy flag)
 # ---------------------------------------------------------------------------
 
 
 class Orchestrator:
+    """Original flat-pipeline orchestrator. Use --legacy to activate."""
+
     AGENTS: list[type[BaseAgent]] = [
         ArchitectAgent,
         ScaffoldAgent,
         CoderAgent,
-        GameAgent,      # self-skips if idea is not game-related
+        GameAgent,
         SecurityAgent,
         DeployAgent,
     ]
@@ -123,7 +135,7 @@ class Orchestrator:
 
     def run(self) -> ProjectContext:
         self.console.banner(
-            "ForgeOS",
+            "ForgeOS V1 (legacy)",
             f"project_id={self.context.project_id} workdir={self.context.workdir}",
         )
         self.context.save()
@@ -131,7 +143,6 @@ class Orchestrator:
         for agent_cls in self.AGENTS:
             self._run_agent(agent_cls)
 
-        # Optional: feed knowledge base
         if RUNTIME.enable_obsidian:
             try:
                 from forge_brain import ForgeBrain
@@ -148,10 +159,6 @@ class Orchestrator:
         self._write_summary_md()
         return self.context
 
-    # ------------------------------------------------------------------
-    # Agent execution with retry + degrade
-    # ------------------------------------------------------------------
-
     def _run_agent(self, agent_cls: type[BaseAgent]) -> None:
         agent = agent_cls()
         attempts = 0
@@ -165,7 +172,6 @@ class Orchestrator:
                 last_result = agent.run(self.context)
                 last_result.retries = attempts - 1
             except Exception as e:
-                # BaseAgent.run swallows exceptions, but stay safe.
                 self.console.error(f"{agent.name} crashed: {e}")
                 tb = traceback.format_exc()
                 last_result = AgentResult.started(agent.name).finalize(
@@ -176,7 +182,9 @@ class Orchestrator:
 
             self.context.save()
             if last_result.status == AgentStatus.SUCCESS.value:
-                self.console.step(agent.name, "success", f"in {last_result.duration_seconds:.1f}s")
+                self.console.step(
+                    agent.name, "success", f"in {last_result.duration_seconds:.1f}s"
+                )
                 self.statuses.append({"agent": agent.name, "status": "success"})
                 return
 
@@ -186,7 +194,6 @@ class Orchestrator:
                 delay *= 2
                 continue
 
-        # All retries exhausted → degrade
         self.console.error(
             f"{agent.name} failed after {attempts} attempts: "
             f"{last_result.error if last_result else 'unknown'}"
@@ -198,10 +205,6 @@ class Orchestrator:
                 "error": last_result.error if last_result else "unknown",
             }
         )
-
-    # ------------------------------------------------------------------
-    # Final reports
-    # ------------------------------------------------------------------
 
     def _write_status_md(self) -> None:
         rows = "\n".join(
@@ -236,12 +239,7 @@ class Orchestrator:
             "```json\n" + _safe_json(s["stack"]) + "\n```\n\n"
             "## Deployment\n\n"
             f"{deploy_md}\n"
-            "## Monitoring\n\n"
-            + "\n".join(
-                f"- {k}: {v}" for k, v in (s["monitoring_urls"] or {}).items()
-            )
-            + ("\n" if s["monitoring_urls"] else "(none)\n")
-            + "\n## Cost & tokens\n\n"
+            "## Cost & tokens\n\n"
             f"- Tokens: {tokens}\n"
             f"- Cost (USD): {cost}\n\n"
             "## Failures\n\n"
@@ -251,11 +249,7 @@ class Orchestrator:
                 )
                 or "(none)"
             )
-            + "\n\n## Next steps\n\n"
-            "- Review SECURITY.md and address outstanding risks.\n"
-            "- Set up production secrets in Doppler.\n"
-            "- Run a manual smoke test against live URLs.\n"
-            "- Configure healer.py as a daemon in production.\n",
+            + "\n",
         )
 
 
@@ -273,24 +267,50 @@ def _safe_json(obj: Any) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="ForgeOS orchestrator")
     parser.add_argument("--idea", help="Idea to build")
-    parser.add_argument("--idea-file", default="idea.txt", help="Fallback file with the idea")
+    parser.add_argument(
+        "--idea-file", default="idea.txt", help="Fallback file with the idea"
+    )
     parser.add_argument("--workdir", help="Workdir override")
+    parser.add_argument(
+        "--legacy",
+        action="store_true",
+        help="Use V1 flat pipeline (no GStack gates, no Missions)",
+    )
     args = parser.parse_args(argv)
 
     idea = args.idea or ""
     if not idea and os.path.exists(args.idea_file):
         idea = Path(args.idea_file).read_text(encoding="utf-8").strip()
     if not idea:
-        sys.stderr.write(
-            "No --idea provided and no idea.txt found. Aborting.\n"
-        )
+        sys.stderr.write("No --idea provided and no idea.txt found. Aborting.\n")
         return 2
 
-    orchestrator = Orchestrator(idea=idea, workdir=args.workdir)
-    orchestrator.run()
-    sys.stderr.write(
-        f"\nForgeOS run complete. See {orchestrator.context.workdir}/SUMMARY.md\n"
-    )
+    if args.legacy:
+        sys.stderr.write("[orchestrator] running V1 legacy pipeline\n")
+        orch = Orchestrator(idea=idea, workdir=args.workdir)
+        orch.run()
+        sys.stderr.write(
+            f"\nForgeOS V1 run complete. See {orch.context.workdir}/SUMMARY.md\n"
+        )
+    else:
+        sys.stderr.write("[orchestrator] running V2 pipeline (GStack + Missions)\n")
+        from agents.hermes import HermesOrchestrator
+
+        hermes = HermesOrchestrator(idea=idea, workdir=args.workdir)
+        try:
+            ctx = hermes.run()
+            sys.stderr.write(
+                f"\nForgeOS V2 run complete.\n"
+                f"  Project:  {ctx.project_id}\n"
+                f"  Workdir:  {ctx.workdir}\n"
+                f"  Repo:     {ctx.repo_url or '(none)'}\n"
+                f"  Backend:  {ctx.backend_url or '(none)'}\n"
+                f"  Frontend: {ctx.frontend_url or '(none)'}\n"
+            )
+        except RuntimeError as e:
+            sys.stderr.write(f"\nForgeOS V2 STOPPED: {e}\n")
+            return 1
+
     return 0
 
 

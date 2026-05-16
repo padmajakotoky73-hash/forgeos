@@ -1,4 +1,4 @@
-"""
+﻿"""
 ForgeOS — runtime configuration.
 
 All secrets are loaded from environment variables. A `.env` file is loaded
@@ -122,6 +122,9 @@ class ToolConfig:
     )
     vercel_team_id: str = field(default_factory=lambda: _get("VERCEL_TEAM_ID"))
 
+    render_api_key: str = field(default_factory=lambda: _get("RENDER_API_KEY"))
+    render_owner_id: str = field(default_factory=lambda: _get("RENDER_OWNER_ID"))
+
     supabase_access_token: str = field(default_factory=lambda: _get("SUPABASE_ACCESS_TOKEN"))
     supabase_project_ref: str = field(default_factory=lambda: _get("SUPABASE_PROJECT_REF"))
     supabase_api: str = field(
@@ -182,6 +185,22 @@ class RuntimeConfig:
         default_factory=lambda: _get("FORGEOS_API_KEY")
     )  # Optional Bearer token for the FastAPI server; empty = no auth (dev only)
 
+    # Telegram notifications (Hermes)
+    telegram_bot_token: str = field(
+        default_factory=lambda: _get("TELEGRAM_BOT_TOKEN")
+    )
+    telegram_chat_id: str = field(
+        default_factory=lambda: _get("TELEGRAM_CHAT_ID")
+    )
+
+    # Mission system
+    mission_max_features: int = field(
+        default_factory=lambda: _get_int("MISSION_MAX_FEATURES", 12)
+    )
+    gstack_min_score: float = field(
+        default_factory=lambda: _get_float("GSTACK_MIN_SCORE", 7.0)
+    )
+
 
 # ---------------------------------------------------------------------------
 # Costs (rough $/1K tokens — used for ledger; update as needed)
@@ -190,8 +209,8 @@ class RuntimeConfig:
 
 MODEL_COST_PER_1K_TOKENS: dict[str, tuple[float, float]] = {
     # (input $/1K, output $/1K)
-    "claude-haiku-4-5":        (0.00080, 0.00400),   # primary fallback
-    "claude-sonnet-4-20250514": (0.003,   0.015),
+    "claude-haiku-4-5":        (0.00080, 0.00400),   # validation / security
+    "claude-sonnet-4-20250514": (0.003,   0.015),    # planning / architecture
     "claude-opus-4-6":          (0.015,   0.075),
     "deepseek/deepseek-chat":   (0.00027, 0.0011),
     "deepseek-v3":              (0.00027, 0.0011),

@@ -1,4 +1,4 @@
-"""
+﻿"""
 ForgeOS — Core data models.
 
 All inter-agent state is exchanged through `ProjectContext`, which is
@@ -524,17 +524,61 @@ class ProjectContext:
         }
 
 
+# ---------------------------------------------------------------------------
+# GStack / Mission models
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class GateResult:
+    gate: str
+    passed: bool
+    score: float
+    feedback: str
+    timestamp: str = field(default_factory=_utc_now_iso)
+
+
+@dataclass
+class ValidationAssertion:
+    description: str
+    category: str = "functional"
+
+
+@dataclass
+class ValidationContract:
+    project_id: str
+    assertions: list[ValidationAssertion]
+    acceptance_threshold: float = 0.90
+    created_at: str = field(default_factory=_utc_now_iso)
+
+
+@dataclass
+class MissionHandoff:
+    agent: str
+    feature: str
+    completed: list[str]
+    skipped: list[str]
+    issues: list[str]
+    commands_run: list[str]
+    next_feature: str
+    timestamp: str = field(default_factory=_utc_now_iso)
+
+
 __all__ = [
     "AgentResult",
     "AgentStatus",
+    "GateResult",
     "LLMClient",
     "LLMError",
     "LLMResponse",
+    "MissionHandoff",
     "Phase",
     "ProjectContext",
     "StackChoice",
     "Task",
     "TaskStatus",
     "TokenLedgerEntry",
+    "ValidationAssertion",
+    "ValidationContract",
     "WikiNote",
 ]
