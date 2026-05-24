@@ -488,13 +488,18 @@ def _parse_verdict(text: str, min_score: float) -> tuple[bool, float, str]:
     if m:
         score = float(m.group(1))
 
-    tail = upper[-400:]
-    if "PASS" in tail and "FAIL" not in tail[tail.rfind("PASS"):]:
-        passed = True
-    elif "FAIL" in tail:
-        passed = False
-    else:
+    if score > 0:
+        # Numeric score is authoritative — text verdict is advisory only.
         passed = score >= min_score
+    else:
+        # No score found — fall back to text-based PASS/FAIL detection.
+        tail = upper[-400:]
+        if "PASS" in tail and "FAIL" not in tail[tail.rfind("PASS"):]:
+            passed = True
+        elif "FAIL" in tail:
+            passed = False
+        else:
+            passed = score >= min_score
 
     lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
     feedback_lines = [
