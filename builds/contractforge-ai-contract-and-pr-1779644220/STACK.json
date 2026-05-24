@@ -3,7 +3,7 @@
   "backend": "FastAPI",
   "database": "Supabase (Postgres)",
   "cache": "Upstash Redis",
-  "queue": "Upstash Kafka",
+  "queue": "Upstash Redis (Streams)",
   "auth": "Supabase Auth",
   "payments": "Lemon Squeezy",
   "email": "Resend",
@@ -12,6 +12,11 @@
   "deployment": "Railway (backend) + Vercel (frontend)",
   "extras": {
     "ml_service": "FastAPI inference + MLflow + Great Expectations",
-    "gpu": "modal.com"
+    "gpu": "modal.com",
+    "gst_compliance_db": "Hardcoded GST rules + Supabase JSON columns for state-specific rates",
+    "document_storage": "Supabase Storage (S3-compatible) for PDFs and signed contracts",
+    "rate_limiting": "Upstash Redis (sliding window)",
+    "analytics": "PostHog (usage tracking for contract generation)",
+    "cron_jobs": "APScheduler (FastAPI) for subscription renewal reminders via Resend"
   }
 }
