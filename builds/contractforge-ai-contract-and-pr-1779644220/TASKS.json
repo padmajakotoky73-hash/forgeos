@@ -1,6 +1,6 @@
 [
   {
-    "id": "task_6d02ff3816dc",
+    "id": "task_e3487284a239",
     "title": "Generate project skeleton + configs",
     "agent": "scaffold",
     "phase": "scaffold",
@@ -10,142 +10,142 @@
     "artifacts": []
   },
   {
-    "id": "task_b72278557036",
+    "id": "task_f93decf1ab60",
     "title": "Apply Supabase schema + RLS placeholders",
     "agent": "scaffold",
     "phase": "scaffold",
     "depends_on": [
-      "task_6d02ff3816dc"
+      "task_e3487284a239"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_211ac3238e03",
+    "id": "task_53cd642bf447",
     "title": "Backend: healthz + auth exchange + base middleware",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_b72278557036"
+      "task_f93decf1ab60"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_e4092813be16",
+    "id": "task_e1a603eea042",
     "title": "Backend: items CRUD endpoints with Pydantic models",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_211ac3238e03"
+      "task_53cd642bf447"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_574479ba82ec",
+    "id": "task_c8c11c45ddf9",
     "title": "Backend: LemonSqueezy webhook handler",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_211ac3238e03"
+      "task_53cd642bf447"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_d228dea9ecff",
+    "id": "task_3a5f1ce0600e",
     "title": "Frontend: app shell + auth flow",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_211ac3238e03"
+      "task_53cd642bf447"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_d69af3f95969",
+    "id": "task_5ef4cef64923",
     "title": "Frontend: items dashboard + forms",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_d228dea9ecff",
-      "task_e4092813be16"
+      "task_3a5f1ce0600e",
+      "task_e1a603eea042"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_b8044250148c",
+    "id": "task_4862613086a6",
     "title": "Frontend: pricing + checkout link",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_d228dea9ecff",
-      "task_574479ba82ec"
+      "task_3a5f1ce0600e",
+      "task_c8c11c45ddf9"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_ab7937400024",
+    "id": "task_d7c7c4f4ee92",
     "title": "Tests: backend pytest + frontend vitest (>=80%)",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_e4092813be16",
-      "task_d69af3f95969"
+      "task_e1a603eea042",
+      "task_5ef4cef64923"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_50d85c0e0062",
+    "id": "task_c9edefefab93",
     "title": "Security: OWASP audit + RLS + rate limits",
     "agent": "security",
     "phase": "security",
     "depends_on": [
-      "task_ab7937400024"
+      "task_d7c7c4f4ee92"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_c5af627e7750",
+    "id": "task_3e8b35388e29",
     "title": "Deploy: GitHub repo, Railway, Vercel, monitoring",
     "agent": "deploy",
     "phase": "deploy",
     "depends_on": [
-      "task_50d85c0e0062"
+      "task_c9edefefab93"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_02408a84de6d",
+    "id": "task_39a367bd6ee2",
     "title": "ML: training script + inference endpoint + MLflow",
     "agent": "coder",
     "phase": "code",
     "depends_on": [
-      "task_211ac3238e03"
+      "task_53cd642bf447"
     ],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_626c4a02bd19",
+    "id": "task_a5f9ec4da6c7",
     "title": "Create Next.js 14 App Router project structure",
     "agent": "scaffold",
     "phase": "scaffold",
@@ -155,8 +155,8 @@
     "artifacts": []
   },
   {
-    "id": "task_47f173d4e9d4",
-    "title": "Set up Tailwind CSS and Shadcn/ui for styling",
+    "id": "task_eee6edf3477f",
+    "title": "Set up Tailwind CSS and Shadcn/ui components",
     "agent": "coder",
     "phase": "code",
     "depends_on": [],
@@ -165,8 +165,8 @@
     "artifacts": []
   },
   {
-    "id": "task_f3232e2ac5d5",
-    "title": "Develop backend API with FastAPI",
+    "id": "task_5e9744e69e5a",
+    "title": "Develop FastAPI backend with contract generation endpoints",
     "agent": "coder",
     "phase": "code",
     "depends_on": [],
@@ -175,7 +175,7 @@
     "artifacts": []
   },
   {
-    "id": "task_58b05816305d",
+    "id": "task_d501e1140893",
     "title": "Integrate Supabase for database operations",
     "agent": "coder",
     "phase": "code",
@@ -185,20 +185,20 @@
     "artifacts": []
   },
   {
-    "id": "task_31730eba757d",
-    "title": "Set up Upstash Redis and Kafka for caching and messaging",
-    "agent": "scaffold",
-    "phase": "scaffold",
+    "id": "task_aa72476a86ea",
+    "title": "Implement GST compliance logic in backend",
+    "agent": "coder",
+    "phase": "code",
     "depends_on": [],
     "status": "pending",
     "notes": "",
     "artifacts": []
   },
   {
-    "id": "task_3b28c9bfa048",
-    "title": "Configure Lemon Squeezy for payments",
-    "agent": "coder",
-    "phase": "code",
+    "id": "task_8d76ece99112",
+    "title": "Deploy Next.js frontend and FastAPI backend using Railway and Vercel",
+    "agent": "deploy",
+    "phase": "deploy",
     "depends_on": [],
     "status": "pending",
     "notes": "",

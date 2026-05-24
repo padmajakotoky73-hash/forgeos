@@ -6,7 +6,7 @@
 - **backend**: FastAPI
 - **database**: Supabase (Postgres)
 - **cache**: Upstash Redis
-- **queue**: Upstash Kafka
+- **queue**: Upstash Redis (Streams)
 - **auth**: Supabase Auth
 - **payments**: Lemon Squeezy
 - **email**: Resend

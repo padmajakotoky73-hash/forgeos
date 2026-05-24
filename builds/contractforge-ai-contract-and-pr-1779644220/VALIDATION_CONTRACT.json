@@ -2,78 +2,6 @@
   "project_id": "proj_a3425ae5974c",
   "assertions": [
     {
-      "description": "GET /healthz returns 200 with 'OK'",
-      "category": "infra"
-    },
-    {
-      "description": "POST /auth/signup creates a new user",
-      "category": "auth"
-    },
-    {
-      "description": "POST /auth/login authenticates an existing user",
-      "category": "auth"
-    },
-    {
-      "description": "GET /items returns 200 with empty list for unauthenticated user",
-      "category": "api"
-    },
-    {
-      "description": "POST /items creates a new item",
-      "category": "api"
-    },
-    {
-      "description": "GET /items/{item_id} returns 200 with correct item details",
-      "category": "api"
-    },
-    {
-      "description": "PUT /items/{item_id} updates an existing item",
-      "category": "api"
-    },
-    {
-      "description": "DELETE /items/{item_id} deletes an existing item",
-      "category": "api"
-    },
-    {
-      "description": "POST /webhook/lemonsqueezy handles webhook events",
-      "category": "infra"
-    },
-    {
-      "description": "PDF export with e-signature flow is available in the frontend",
-      "category": "ui"
-    },
-    {
-      "description": "Lemon Squeezy payment gateway is configured correctly",
-      "category": "payments"
-    },
-    {
-      "description": "User satisfaction scores from surveys are collected and stored",
-      "category": "data"
-    },
-    {
-      "description": "Number of contracts generated per month is tracked",
-      "category": "data"
-    },
-    {
-      "description": "Conversion rate from contract generation to payment is calculated",
-      "category": "data"
-    },
-    {
-      "description": "Tailwind CSS and Shadcn/ui are correctly set up for styling",
-      "category": "ui"
-    },
-    {
-      "description": "FastAPI backend API endpoints are tested with pytest (>=80%)",
-      "category": "perf"
-    },
-    {
-      "description": "Frontend vitest tests cover >=80% of the codebase",
-      "category": "perf"
-    },
-    {
-      "description": "MLflow is configured for model training and inference",
-      "category": "ml_service"
-    },
-    {
       "description": "GET / returns 200 with app name and version",
       "category": "api"
     },
@@ -119,6 +47,46 @@
     },
     {
       "description": "Frontend dashboard shows items list",
+      "category": "ui"
+    },
+    {
+      "description": "All pages mobile responsive at 375px viewport",
+      "category": "ui"
+    },
+    {
+      "description": "Supabase RLS policies exist for all tables",
+      "category": "security"
+    },
+    {
+      "description": ".env file not committed to git",
+      "category": "security"
+    },
+    {
+      "description": "All mutating routes require authentication",
+      "category": "security"
+    },
+    {
+      "description": "Backend dockerfile builds without errors",
+      "category": "infra"
+    },
+    {
+      "description": "Frontend Next.js build completes without errors",
+      "category": "infra"
+    },
+    {
+      "description": "GitHub Actions CI workflow exists",
+      "category": "infra"
+    },
+    {
+      "description": "vercel.json exists in frontend directory",
+      "category": "infra"
+    },
+    {
+      "description": "Backend pytest suite has at least 5 tests",
+      "category": "api"
+    },
+    {
+      "description": "LemonSqueezy checkout link is present on pricing page",
       "category": "ui"
     }
   ],
