@@ -264,3 +264,27 @@
 - LS payment gate on ContractForge
 - ComputerUseAgent integration into ForgeOS scaffold templates
 - ComputerUseAgent integration test with real Playwright task
+
+## LS Test Mode Active
+Status: Application under review by LS.
+Test mode: ON (intentional — do NOT toggle off until LS approves merchant application).
+Go-live action: Toggle test mode OFF in LS dashboard after merchant approval. No code change required.
+
+### Products created (2026-05-25)
+| Product | Price | Variant ID | Checkout URL |
+|---------|-------|------------|--------------|
+| ContractForge — Single Contract | ₹1,499 one-time | 1701390 | https://contractforge.lemonsqueezy.com/checkout/buy/295f4732-a548-4062-bdb1-b589a096c277 |
+| ContractForge — Monthly | ₹2,499/month | 1701481 | https://contractforge.lemonsqueezy.com/checkout/buy/9e263419-18ac-4129-86c0-f2519178a489 |
+
+### Secrets set on Render (srv-d89l4tmgvqtc73c3v8p0)
+- LEMONSQUEEZY_WEBHOOK_SECRET ✓
+- LEMONSQUEEZY_API_KEY ✓
+- LEMONSQUEEZY_STORE_ID = 323289 ✓
+- LEMONSQUEEZY_CHECKOUT_PER_CONTRACT ✓
+- LEMONSQUEEZY_CHECKOUT_MONTHLY ✓
+- LEMONSQUEEZY_TEST_MODE = true ✓
+
+### Webhook
+- ID: 103762
+- Endpoint: https://contractforge-ai-contract-and-a3425a.onrender.com/webhooks/lemonsqueezy
+- Events: order_created, subscription_created, subscription_updated, subscription_cancelled
