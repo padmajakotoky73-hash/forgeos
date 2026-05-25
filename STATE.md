@@ -173,3 +173,53 @@
   - No [INSERT] placeholders
 
 **Next:** Wait for deploy dep-d89vvtfaqgkc73aj8i20, test generate endpoint, verify all Phase 3 checks pass on Render
+
+---
+
+## [2026-05-25T08:00:00Z] Phase 3 complete -- Contract generation verified
+
+**Status:** PASSED
+
+**Verified on Render (live):**
+- POST /contracts/generate -> HTTP 200, contract id cf-20260525075857
+- rupee 75,000 (x1) -- PASS
+- GST (x2) -- PASS (at least twice)
+- 18% (x2) -- PASS (at least twice)
+- Mumbai (x1) -- PASS (in jurisdiction section)
+- Indian Contract Act (x2) -- PASS (referenced)
+- Zero [INSERT]/TBD placeholders -- PASS
+- stop_reason: end_turn, length ~5974 chars (concise 1000-word constraint prevents truncation)
+
+**Root causes fixed:**
+1. max_tokens=4096 was causing truncation at 18479 chars -- jurisdiction clause never rendered
+2. Added MAXIMUM 1000 words constraint to user prompt -- stop_reason now end_turn
+3. Explicit CONTRACT STRUCTURE puts jurisdiction as section 4 (not buried at clause 9)
+4. ANTHROPIC_API_KEY stored correctly via Python urllib (curl had shell escaping issue)
+5. Added 503/401/502 error handling to expose actual API errors
+
+**Commit:** 260e27f (feat: contract generation verified -- all India clauses present)
+
+---
+
+## [2026-05-25T08:05:00Z] Phase 4 complete -- ComputerUseAgent scaffolded
+
+**Status:** PASSED (scaffolded + imports verified)
+
+**Done:**
+- tools/computer_use.py: new ComputerUseAgent class
+  - Agentic loop: screenshot -> claude-sonnet-4-6 (computer-use-2024-10-22 beta) -> action -> repeat
+  - Actions: left_click, right_click, double_click, type, key, scroll, mouse_move, drag
+  - No VNC/Docker required -- Playwright handles browser substrate
+  - Max 20 steps per task
+  - Falls back gracefully if ANTHROPIC_API_KEY or playwright missing
+- tools/browser_agent.py: COMPUTER_USE=1 env var routes _run_browser_task to ComputerUseAgent
+- Verified imports: ComputerUseAgent import OK, model: claude-sonnet-4-6
+
+**Design decision:** Playwright-backed instead of VNC
+  - VNC sandbox requires Docker + additional setup that blocks testing
+  - Playwright runs headless in WSL2 immediately
+  - Same agentic loop, cleaner architecture, no system deps
+
+**Commit:** eb8b543 (feat: ComputerUseAgent -- Claude claude-sonnet-4-6 computer use + Playwright)
+
+**Next ForgeOS phase:** Wire ComputerUseAgent into scaffold templates (every generated product gets embedded agent), integration test with real Playwright browser task
