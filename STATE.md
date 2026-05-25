@@ -288,3 +288,34 @@ Go-live action: Toggle test mode OFF in LS dashboard after merchant approval. No
 - ID: 103762
 - Endpoint: https://contractforge-ai-contract-and-a3425a.onrender.com/webhooks/lemonsqueezy
 - Events: order_created, subscription_created, subscription_updated, subscription_cancelled
+
+---
+
+## [2026-05-25] Phase 5B — Payment Gate Complete
+
+### What was built
+- `supabase/migrations/002_billing.sql` — `free_trials` + `subscriptions` tables (applied via Supabase dashboard SQL Editor)
+- `backend/app/routers/billing.py` — `/webhooks/lemonsqueezy` HMAC-verified handler (order_created, subscription_created/updated/cancelled)
+- `backend/app/services/entitlement.py` — free trial → per_contract credits → monthly logic
+- `backend/app/routers/contracts.py` — 402 gate on POST /contracts/generate (consume=True) and POST /contracts/{id}/export (consume=False)
+- `frontend/components/PaywallModal.tsx` — overlay shown on 402, two checkout CTAs
+- `frontend/app/pricing/page.tsx` — /pricing page with both plan cards
+- `backend/tests/test_billing.py` — 4 billing tests, all 4 PASSED ✓
+
+### Render secrets updated (2026-05-25)
+- SUPABASE_URL ✓
+- SUPABASE_ANON_KEY ✓
+- SUPABASE_SERVICE_ROLE_KEY ✓
+(all 10 env vars now on Render srv-d89l4tmgvqtc73c3v8p0)
+
+### Entitlement flow
+1. Fresh email → free trial granted (1 use, INSERT into free_trials)
+2. Trial used + no subscription → 402 with checkout URLs
+3. order_created webhook (per_contract) → 1 credit in subscriptions
+4. monthly subscription → unlimited (contracts_remaining = 999)
+
+### Pending
+- Apply 002_billing.sql in Supabase dashboard (if not yet done)
+- Add NEXT_PUBLIC_CHECKOUT_PER_CONTRACT + NEXT_PUBLIC_CHECKOUT_MONTHLY to frontend Vercel env vars for /pricing page
+- Toggle LS test mode OFF after merchant approval
+- Add SUPABASE_JWT_SECRET to Render for production JWT auth (backlog)
