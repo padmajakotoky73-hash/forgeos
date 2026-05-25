@@ -247,6 +247,11 @@ class BrowserAgent:
     # ------------------------------------------------------------------
 
     def _run_browser_task(self, task: str, action: str) -> BrowserResult:
+        # Prefer ComputerUseAgent when COMPUTER_USE=1 (claude-sonnet-4-6 + Playwright)
+        if os.environ.get("COMPUTER_USE") == "1":
+            from .computer_use import ComputerUseAgent
+            return ComputerUseAgent(headless=self.headless).run(task)
+
         try:
             import asyncio as _asyncio
 
@@ -254,7 +259,6 @@ class BrowserAgent:
                 self._async_run_task(task, action)
             )
         except RuntimeError:
-            # Already in an event loop (Jupyter / async context)
             import concurrent.futures as _cf
             with _cf.ThreadPoolExecutor(max_workers=1) as pool:
                 future = pool.submit(asyncio.run, self._async_run_task(task, action))
