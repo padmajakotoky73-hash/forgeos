@@ -333,3 +333,130 @@ Go-live action: Toggle test mode OFF in LS dashboard after merchant approval. No
 - Fresh production build triggered: dpl_9gAhqYHakfLPEFH3UqycUALCr5wf (READY in 20s)
 - /pricing page verified: HTTP 200, both LS checkout URLs embedded in SSR HTML
 - Production URL: https://contractforge-ai-contract-and-a3425.vercel.app/pricing
+
+---
+
+## [2026-05-25] SESSION 3 COMPLETE — Phase 5A + 5B: Full Payment Gate Live
+
+### Phase 5A — Lemon Squeezy Store Setup ✅
+
+**Goal:** Get ContractForge billing infrastructure live in LS (test mode).
+
+| Item | Detail |
+|------|--------|
+| Store | ContractForge · INR · Test mode ON (intentional) |
+| Merchant status | Application under review — do NOT toggle test mode off |
+| Product 1 | ContractForge — Single Contract · ₹1,499 one-time · Variant 1701390 |
+| Product 2 | ContractForge — Monthly · ₹2,499/month · Variant 1701481 |
+| Checkout URL (per contract) | https://contractforge.lemonsqueezy.com/checkout/buy/295f4732-a548-4062-bdb1-b589a096c277 |
+| Checkout URL (monthly) | https://contractforge.lemonsqueezy.com/checkout/buy/9e263419-18ac-4129-86c0-f2519178a489 |
+| Webhook ID | 103762 · endpoint: /webhooks/lemonsqueezy |
+| Webhook events | order_created, subscription_created, subscription_updated, subscription_cancelled |
+| Render secrets (10 total) | LEMONSQUEEZY_* (6) + SUPABASE_* (3) + ANTHROPIC_API_KEY |
+| ForgeOS commit | 76ebb1c — "chore: LS products created (test mode), secrets on Render" |
+
+---
+
+### Phase 5B — Payment Gate Code ✅
+
+**Goal:** Entitlement enforcement on ContractForge backend + frontend billing UI.
+
+#### Files written
+
+| File | Purpose |
+|------|---------|
+| `supabase/migrations/002_billing.sql` | `free_trials` + `subscriptions` tables, RLS enabled, updated_at trigger |
+| `backend/app/routers/billing.py` | `/webhooks/lemonsqueezy` — HMAC-verified, handles 4 event types |
+| `backend/app/services/entitlement.py` | free trial → per_contract credits → monthly unlimited |
+| `backend/app/routers/contracts.py` | 402 gate on POST /generate (consume=True) and POST /{id}/export (consume=False) |
+| `backend/app/config.py` | Added 4 LS fields to Settings |
+| `backend/app/main.py` | Supabase lifespan init, billing router registered |
+| `backend/tests/test_billing.py` | 4 billing tests — all passing |
+| `frontend/components/PaywallModal.tsx` | Overlay on 402 with two LS checkout CTAs |
+| `frontend/app/pricing/page.tsx` | /pricing — two plan cards, LS checkout links |
+
+#### Test results
+
+```
+test_generate_fresh_email_grants_free_trial   PASSED
+test_generate_second_use_returns_402          PASSED
+test_webhook_order_created_inserts_sub        PASSED
+test_generate_with_active_subscription_200    PASSED
+
+4 passed in 1.30s
+```
+
+#### Entitlement logic
+1. Fresh email → INSERT into free_trials → 200 (one free contract)
+2. Same email again, no subscription → 402 + checkout URLs in detail
+3. `order_created` webhook (variant 1701390) → subscriptions row, plan=per_contract, credits=1
+4. `subscription_created` webhook → plan=monthly, credits=999 (unlimited)
+5. `subscription_cancelled` → active=False
+
+#### ContractForge commit
+`d0d12e5` — "feat: Phase 5B payment gate -- LS webhooks, entitlement service, 402 gate, PaywallModal, /pricing page (4/4 billing tests pass)"
+
+---
+
+### Supabase credentials fix ✅
+
+| Issue | ForgeOS .env had project sgtnxmoymxdtoqoszcwx (ForgeOS), not ContractForge |
+|-------|-----------|
+| Fix | All 3 SUPABASE_* vars on Render updated to vcjicrqfnwdegggkrlpd |
+| Migration | 002_billing.sql applied via SQL Editor with RLS enabled — Success |
+| Local .env | Written to ContractForge project root (gitignored) |
+| ForgeOS commit | 9db617f — "fix: ContractForge Supabase project corrected to vcjicrqfnwdegggkrlpd" |
+
+---
+
+### Vercel /pricing page ✅
+
+| Item | Detail |
+|------|--------|
+| Project | contractforge-ai-contract-and-a3425a |
+| Vercel project ID | prj_PMWAhvx7fvzaSJp9R7DgRQHl7OoB |
+| Supabase project | vcjicrqfnwdegggkrlpd (ap-southeast-1, Singapore) |
+| Vars added | NEXT_PUBLIC_CHECKOUT_PER_CONTRACT, NEXT_PUBLIC_CHECKOUT_MONTHLY |
+| All 4 Vercel env vars | NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_CHECKOUT_PER_CONTRACT, NEXT_PUBLIC_CHECKOUT_MONTHLY |
+| Deploy | dpl_9gAhqYHakfLPEFH3UqycUALCr5wf — READY in 20s (fresh build from Git) |
+| Production URL | https://contractforge-ai-contract-and-a3425.vercel.app/pricing |
+| Verification | HTTP 200, ₹1,499 + ₹2,499 + both LS checkout URLs in SSR HTML |
+| ForgeOS commit | a8ae7be — "docs: Vercel NEXT_PUBLIC_ checkout vars confirmed on /pricing" |
+
+---
+
+### All Session 3 commit hashes
+
+#### ContractForge repo (github.com/xenaarch-dev/contractforge-ai-contract-and-a3425a)
+| Hash | Message |
+|------|---------|
+| `d0d12e5` | feat: Phase 5B payment gate |
+
+#### ForgeOS repo
+| Hash | Message |
+|------|---------|
+| `76ebb1c` | chore: LS products created (test mode), secrets on Render |
+| `496393f` | docs: STATE.md — Phase 5B payment gate complete |
+| `9db617f` | fix: ContractForge Supabase project corrected to vcjicrqfnwdegggkrlpd |
+| `a8ae7be` | docs: Vercel NEXT_PUBLIC_ checkout vars confirmed on /pricing |
+
+---
+
+### LS test mode — ACTION REQUIRED (future)
+
+- **Status:** Test mode ON. Merchant application under review by Lemon Squeezy.
+- **When approved:** Toggle test mode OFF in LS dashboard → no code change required.
+- **Do NOT:** Toggle off before approval. Do NOT enter banking/payout details until approved.
+
+---
+
+### Remaining backlog
+
+| Item | Priority |
+|------|---------|
+| Toggle LS test mode OFF | After LS merchant approval |
+| SUPABASE_JWT_SECRET on Render | Before production auth (currently user_email from request body) |
+| Doppler install in WSL | Secrets management cleanup (low) |
+| LS product images | Nice-to-have |
+| LS post-purchase redirect URL | Point to ContractForge dashboard |
+| Wire PaywallModal into frontend UI | Frontend dashboard → show on 402 response |
