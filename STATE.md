@@ -104,3 +104,72 @@
 - Agents that can: open apps, fill forms, navigate any website, operate like a human at a computer
 - Every product ForgeOS builds gets an embedded ComputerUseAgent at scaffold time
 - This is the "runs a company autonomously" layer
+
+---
+
+## [2026-05-25T07:35:00Z] Phase 2 complete — PDF Export
+
+**Status:** PASSED
+
+**Done:**
+-  endpoint — returns PDF binary
+- Library: reportlab 4.2 (no system deps)
+- Font: DejaVuSans from /usr/share/fonts/truetype/dejavu/ — ₹ renders correctly
+- All 8 sections: SERVICE AGREEMENT header, PARTIES, SCOPE OF WORK, PAYMENT TERMS (₹ + GST 18% + interest), JURISDICTION (Mumbai), TERMINATION (15 days), CONFIDENTIALITY (2 years), SIGNATURE BLOCK (two-column)
+-  endpoint — calls claude-sonnet-4-6 with India-law system prompt
+-  set in Render env vars via API
+- reportlab>=4.2 + anthropic>=0.50 added to pyproject.toml + requirements.txt
+- GitHub commit: 378604b — pushed and auto-deployed by Render
+
+**Verified:**
+- curl -X POST contractforge-ai-contract-and-a3425a.onrender.com/contracts/test-001/export → HTTP 200, 46524 bytes, Content-Type: application/pdf
+- pdfminer extraction: all 8 sections present, ₹75,000 renders, GST at 18%, Indian Contract Act, Mumbai, Maharashtra, two (2) years
+
+**Blockers:** None
+
+**Next:** Phase 3 — Contract generation quality verification (India clauses in claude-sonnet-4-6 output)
+
+---
+
+## [2026-05-25T07:35:00Z] Phase 2 complete -- PDF Export
+
+**Status:** PASSED
+
+**Done:**
+- POST /contracts/{id}/export returns PDF binary (reportlab 4.2, no system deps)
+- DejaVuSans font from /usr/share/fonts/truetype/dejavu/ -- rupee symbol renders correctly
+- All 8 sections present: SERVICE AGREEMENT header, PARTIES, SCOPE OF WORK, PAYMENT TERMS, JURISDICTION (Mumbai Maharashtra), TERMINATION (15 days), CONFIDENTIALITY (2 years), SIGNATURE BLOCK (two-column table)
+- POST /contracts/generate calls claude-sonnet-4-6 with India-law system prompt
+- ANTHROPIC_API_KEY set in Render env via API
+- reportlab>=4.2 + anthropic>=0.50 in pyproject.toml + requirements.txt
+- GitHub commit 378604b pushed and auto-deployed by Render
+
+**Verified:**
+- curl POST .../contracts/test-001/export -> HTTP 200, 46524 bytes, application/pdf
+- pdfminer extraction confirmed: all 8 sections, rupee 75,000, GST at 18%, Indian Contract Act, Mumbai, Maharashtra, two (2) years
+
+**Blockers:** None
+
+**Next:** Phase 3 -- Contract generation quality (India clauses in claude-sonnet-4-6 output)
+
+---
+
+## [2026-05-25T07:53:00Z] Phase 3 — Contract generation quality (IN PROGRESS)
+
+**Status:** IN PROGRESS
+
+**Issues found:**
+1. Render 500 on /contracts/generate -- likely ANTHROPIC_API_KEY not loading from env (investigating)
+2. Prompt caused max_tokens truncation at 18479 chars -- jurisdiction clause never reached (stop_reason: max_tokens)
+3. Mumbai + Maharashtra + Indian Contract Act missing from truncated output
+
+**Fixes applied (commit 260e27f):**
+- User prompt now includes MAXIMUM 1000 words constraint
+- CONTRACT STRUCTURE forces jurisdiction (Mumbai, Maharashtra) to appear as section 4
+- Added 503 check if ANTHROPIC_API_KEY not configured
+- Added 401/502 error handling to expose actual Anthropic errors
+- Verified locally: stop_reason: end_turn, length 5974, all checks pass
+  - rupee 75,000 (1x), GST (2x), 18% (2x), Mumbai (1x), Indian Contract Act (3x), Maharashtra (1x)
+  - No [INSERT] placeholders
+
+**Next:** Wait for deploy dep-d89vvtfaqgkc73aj8i20, test generate endpoint, verify all Phase 3 checks pass on Render
